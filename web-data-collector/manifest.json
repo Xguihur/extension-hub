@@ -1,40 +1,31 @@
 {
   "manifest_version": 3,
-  "name": "网页数据收集器",
+  "name": "淘宝商品信息收集器",
   "version": "1.0.0",
-  "description": "收集网页中的数据信息，展示在弹出面板中",
+  "description": "收集淘宝网页商品详情页信息",
   "permissions": [
-    "activeTab",
-    "storage",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
-    "*://*/*"
+    "*://item.taobao.com/*",
+    "*://detail.tmall.com/*",
+    "*://*.taobao.com/*",
+    "*://*.tmall.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "网页数据收集器",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
-  },
-  "background": {
-    "service_worker": "background/background.js"
+    "default_title": "淘宝商品信息"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "*://item.taobao.com/*",
+        "*://detail.tmall.com/*",
+        "*://*.taobao.com/item.htm*",
+        "*://*.tmall.com/item.htm*"
+      ],
       "js": ["content/content.js"],
       "run_at": "document_end"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["content/*"],
-      "matches": ["<all_urls>"]
     }
   ],
   "icons": {

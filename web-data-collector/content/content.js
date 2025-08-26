@@ -1,111 +1,235 @@
-// content.js - 注入到网页中的内容脚本
-
-class DataCollector {
+// PC版淘宝商品信息提取器 - 使用XPath选择器
+// XPath相比CSS选择器具有更强的表达能力，支持文本内容匹配和复杂的层级关系
+class PCTaobaoExtractor {
     constructor() {
-        this.templates = {
-            'douyin': new DouyinTemplate(),
-            'taobao': new TaobaoTemplate(), 
-            'jd': new JDTemplate(),
-            'custom': new CustomTemplate()
-        };
-        
         this.init();
     }
 
     init() {
-        // 监听来自popup的消息
+        // 监听popup的消息
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            this.handleMessage(request, sender, sendResponse);
-            return true; // 保持消息通道开启
+            if (request.action === 'getProductInfo') {
+                const productInfo = this.extractProductInfo();
+                sendResponse({ success: true, data: productInfo });
+            }
+            return true;
         });
 
-        console.log('DataCollector initialized on:', window.location.href);
+        console.log('PC版淘宝商品信息提取器已初始化 (使用XPath选择器)');
     }
 
-    async handleMessage(request, sender, sendResponse) {
+    extractProductInfo() {
+        const productData = {};
+        
         try {
-            switch (request.action) {
-                case 'ping':
-                    sendResponse({ success: true, status: 'connected' });
-                    break;
-                    
-                case 'collectData':
-                    const data = await this.collectData(request.template);
-                    sendResponse({ success: true, data: data });
-                    break;
-                    
-                default:
-                    sendResponse({ success: false, error: '未知的操作类型' });
+            // 商品标题 - PC版淘宝XPath
+            productData.title = this.getText([
+                '//div[contains(@class, "tb-detail-hd")]//h1',
+                '//*[@id="J_Title"]//h1',
+                '//*[contains(@class, "ItemTitle--title--")]',
+                '//*[contains(@class, "tb-item-title")]',
+                '//h1[@data-spm]',
+                '//h1[text()]',
+                '//h1'
+            ]);
+
+            // 价格信息 - PC版淘宝XPath
+            productData.price = this.getPrice([
+                '//*[contains(@class, "tb-rmb-num")][text()]',
+                '//*[contains(@class, "tm-price-panel")]//*[contains(@class, "tm-price")]',
+                '//*[contains(@class, "price")]//*[contains(@class, "tb-rmb-num")]',
+                '//*[contains(@class, "J_Price")]//*[contains(@class, "tb-rmb-num")]',
+                '//*[@id="J_StrPrice"]//*[contains(@class, "tb-rmb-num")]',
+                '//*[contains(@class, "price-current")]',
+                '//*[contains(text(), "¥")]',
+                '//*[contains(text(), "￥")]'
+            ]);
+
+            // 原价 - PC版淘宝XPath
+            productData.originalPrice = this.getPrice([
+                '//*[contains(@class, "tm-price-ori")]',
+                '//*[contains(@class, "price-original")]//*[contains(@class, "tb-rmb-num")]',
+                '//*[contains(@class, "original-price")]',
+                '//*[contains(@class, "J_OrigPrice")]//*[contains(@class, "tb-rmb-num")]',
+                '//*[contains(text(), "原价")]/following-sibling::*[contains(text(), "¥")]',
+                '//*[text()[contains(., "原价")]]/following-sibling::*'
+            ]);
+
+            // 销量 - PC版淘宝XPath
+            productData.sales = this.getText([
+                '//*[contains(@class, "tm-ind-sellCount")]',
+                '//*[contains(@class, "tb-sell-counter")]',
+                '//*[contains(@class, "J_SellCounter")]',
+                '//*[contains(@class, "sales-info")]',
+                '//*[contains(@class, "sell") and contains(@class, "count")]',
+                '//*[contains(text(), "已售")]',
+                '//*[contains(text(), "成交")]',
+                '//*[contains(text(), "销量")]/following-sibling::*[text()]'
+            ]);
+
+            // 店铺名称 - PC版淘宝XPath
+            productData.shop = this.getText([
+                '//*[contains(@class, "tb-shop-name")]//a',
+                '//*[contains(@class, "J_ShopInfo")]//*[contains(@class, "shop-name")]',
+                '//*[contains(@class, "seller-name")]',
+                '//*[contains(@class, "tm-shop-hd")]//*[contains(@class, "shop-name")]',
+                '//*[@id="J_ShopInfo"]//*[contains(@class, "shop-name")]//a',
+                '//*[contains(text(), "店铺")]/following-sibling::*//a[text()]',
+                '//a[contains(@href, "shop") or contains(@href, "store")][text()]'
+            ]);
+
+            // 评价信息 - PC版淘宝XPath
+            productData.rating = this.getText([
+                '//*[contains(@class, "tm-rate-score")]',
+                '//*[contains(@class, "rate-score")]',
+                '//*[contains(@class, "J_RateCounter")]',
+                '//*[contains(@class, "tb-rate-counter")]',
+                '//*[contains(@class, "rate") and contains(@class, "score")]',
+                '//*[contains(text(), "评分")]/following-sibling::*[text()]',
+                '//*[contains(text(), "评价")]/following-sibling::*[contains(text(), ".") or contains(text(), "分")]',
+                '//*[text()[contains(., ".") and contains(., "分")]]'
+            ]);
+
+            // 发货地址 - PC版淘宝XPath
+            productData.location = this.getText([
+                '//*[contains(@class, "tb-location")]',
+                '//*[contains(@class, "tm-address")]',
+                '//*[contains(@class, "location-info")]',
+                '//*[contains(@class, "location")]',
+                '//*[contains(@class, "address")]',
+                '//*[contains(text(), "发货地")]/following-sibling::*[text()]',
+                '//*[contains(text(), "发货")]/following-sibling::*[text()]',
+                '//*[contains(text(), "地址")]/following-sibling::*[text()]'
+            ]);
+
+            // 商品ID (从URL提取)
+            productData.itemId = this.extractItemId();
+
+            // 过滤空值
+            Object.keys(productData).forEach(key => {
+                if (!productData[key] || productData[key].trim() === '') {
+                    delete productData[key];
+                }
+            });
+
+        } catch (error) {
+            console.error('提取商品信息时出错:', error);
+        }
+
+        console.log('提取到的商品信息:', productData);
+        return productData;
+    }
+
+    getText(xpaths) {
+        for (const xpath of xpaths) {
+            const element = this.getElementByXPath(xpath);
+            if (element && element.textContent.trim()) {
+                return element.textContent.trim();
+            }
+        }
+        return '';
+    }
+
+    getPrice(xpaths) {
+        for (const xpath of xpaths) {
+            const element = this.getElementByXPath(xpath);
+            if (element && element.textContent.trim()) {
+                const text = element.textContent.trim();
+                // 提取价格数字
+                const priceMatch = text.match(/[\d,]+\.?\d*/);
+                if (priceMatch) {
+                    return '¥' + priceMatch[0];
+                }
+                return text;
+            }
+        }
+        return '';
+    }
+
+    // XPath工具方法：根据XPath表达式获取元素
+    getElementByXPath(xpath) {
+        try {
+            const result = document.evaluate(
+                xpath,
+                document,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+            );
+            return result.singleNodeValue;
+        } catch (error) {
+            console.warn('XPath查询失败:', xpath, error);
+            return null;
+        }
+    }
+
+    // XPath工具方法：根据XPath表达式获取所有匹配元素
+    getElementsByXPath(xpath) {
+        try {
+            const result = document.evaluate(
+                xpath,
+                document,
+                null,
+                XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+                null
+            );
+            const elements = [];
+            let element = result.iterateNext();
+            while (element) {
+                elements.push(element);
+                element = result.iterateNext();
+            }
+            return elements;
+        } catch (error) {
+            console.warn('XPath批量查询失败:', xpath, error);
+            return [];
+        }
+    }
+
+    extractItemId() {
+        try {
+            const url = window.location.href;
+            
+            // 从URL中提取商品ID的多种模式
+            const patterns = [
+                /id=(\d+)/,           // ?id=123456
+                /item\/(\d+)/,        // /item/123456
+                /detail\/(\d+)/,      // /detail/123456
+                /\/(\d{10,})/         // 长数字ID
+            ];
+
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
             }
         } catch (error) {
-            console.error('处理消息时出错:', error);
-            sendResponse({ success: false, error: error.message });
+            console.error('提取商品ID失败:', error);
         }
+        return '';
     }
 
-    async collectData(templateName) {
-        if (!templateName) {
-            throw new Error('未指定数据收集模板');
-        }
-
-        const template = this.templates[templateName];
-        if (!template) {
-            throw new Error(`未找到模板: ${templateName}`);
-        }
-
-        console.log(`开始使用模板 ${templateName} 收集数据...`);
-        
-        // 等待页面加载完成
-        await this.waitForPageLoad();
-        
-        // 使用对应模板收集数据
-        const data = await template.collect();
-        
-        console.log('收集到的数据:', data);
-        return data;
-    }
-
-    async waitForPageLoad() {
-        return new Promise((resolve) => {
-            if (document.readyState === 'complete') {
-                resolve();
-            } else {
-                window.addEventListener('load', resolve, { once: true });
-            }
-        });
-    }
-
-    // 通用的工具方法
-    static getElementText(element) {
-        if (!element) return '';
-        return element.textContent?.trim() || '';
-    }
-
-    static getElementAttribute(element, attribute) {
-        if (!element) return '';
-        return element.getAttribute(attribute) || '';
-    }
-
-    static getAllElementsText(elements) {
-        return Array.from(elements).map(el => this.getElementText(el));
-    }
-
-    static getPrice(priceText) {
-        if (!priceText) return '';
-        const price = priceText.match(/[\d,]+\.?\d*/);
-        return price ? price[0] : priceText;
-    }
-
-    static waitForElement(selector, timeout = 5000) {
+    // 工具方法：等待元素出现 (支持XPath)
+    waitForElement(xpathOrSelector, timeout = 5000) {
         return new Promise((resolve, reject) => {
-            const element = document.querySelector(selector);
+            // 判断是XPath还是CSS选择器
+            const isXPath = xpathOrSelector.startsWith('/') || xpathOrSelector.startsWith('./');
+            
+            let element = isXPath 
+                ? this.getElementByXPath(xpathOrSelector)
+                : document.querySelector(xpathOrSelector);
+            
             if (element) {
                 resolve(element);
                 return;
             }
 
             const observer = new MutationObserver(() => {
-                const element = document.querySelector(selector);
+                let element = isXPath 
+                    ? this.getElementByXPath(xpathOrSelector)
+                    : document.querySelector(xpathOrSelector);
+                
                 if (element) {
                     observer.disconnect();
                     resolve(element);
@@ -119,273 +243,17 @@ class DataCollector {
 
             setTimeout(() => {
                 observer.disconnect();
-                reject(new Error(`元素未找到: ${selector}`));
+                reject(new Error(`元素未找到: ${xpathOrSelector}`));
             }, timeout);
         });
     }
 }
 
-// 抖音商城数据收集模板
-class DouyinTemplate {
-    async collect() {
-        try {
-            const data = [];
-            
-            // 商品详情页
-            if (this.isProductPage()) {
-                const productData = await this.collectProductData();
-                if (productData) data.push(productData);
-            }
-            
-            // 商品列表页
-            else if (this.isListPage()) {
-                const listData = await this.collectListData();
-                data.push(...listData);
-            }
-            
-            // 直播间
-            else if (this.isLivePage()) {
-                const liveData = await this.collectLiveData();
-                data.push(...liveData);
-            }
-            
-            return data;
-        } catch (error) {
-            console.error('抖音数据收集失败:', error);
-            throw error;
-        }
-    }
-
-    isProductPage() {
-        return window.location.href.includes('product') || 
-               window.location.href.includes('goods') ||
-               document.querySelector('[data-testid="product-info"]') ||
-               document.querySelector('.product-info');
-    }
-
-    isListPage() {
-        return document.querySelectorAll('.product-item, [data-testid="product-item"]').length > 0;
-    }
-
-    isLivePage() {
-        return window.location.href.includes('live') ||
-               document.querySelector('.live-room, [data-testid="live-room"]');
-    }
-
-    async collectProductData() {
-        const selectors = {
-            title: [
-                '[data-testid="product-title"]',
-                '.product-title',
-                'h1[class*="title"]',
-                '.goods-title',
-                'h1'
-            ].join(','),
-            
-            price: [
-                '[data-testid="product-price"]',
-                '.product-price',
-                '[class*="price"]:not([class*="original"])',
-                '.current-price'
-            ].join(','),
-            
-            originalPrice: [
-                '[data-testid="original-price"]',
-                '.original-price',
-                '[class*="original-price"]'
-            ].join(','),
-            
-            image: [
-                '[data-testid="product-image"] img',
-                '.product-image img',
-                '.goods-image img',
-                '.main-image img'
-            ].join(','),
-            
-            description: [
-                '[data-testid="product-description"]',
-                '.product-description',
-                '.goods-description'
-            ].join(','),
-            
-            seller: [
-                '[data-testid="seller-name"]',
-                '.seller-name',
-                '.shop-name'
-            ].join(',')
-        };
-
-        const product = {
-            title: '抖音商品',
-            url: window.location.href,
-            timestamp: new Date().toISOString()
-        };
-
-        // 收集各个字段
-        Object.entries(selectors).forEach(([key, selector]) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                if (key === 'image') {
-                    product[key] = DataCollector.getElementAttribute(element, 'src');
-                } else if (key.includes('price')) {
-                    product[key] = DataCollector.getPrice(DataCollector.getElementText(element));
-                } else {
-                    product[key] = DataCollector.getElementText(element);
-                }
-            }
-        });
-
-        return Object.keys(product).length > 3 ? product : null;
-    }
-
-    async collectListData() {
-        const items = document.querySelectorAll('.product-item, [data-testid="product-item"], .goods-item');
-        const data = [];
-
-        items.forEach((item, index) => {
-            if (index >= 20) return; // 限制数量
-
-            const productData = {
-                title: '商品列表项 ' + (index + 1),
-                name: DataCollector.getElementText(item.querySelector('.product-name, .goods-name, [class*="title"]')),
-                price: DataCollector.getPrice(DataCollector.getElementText(item.querySelector('[class*="price"]'))),
-                image: DataCollector.getElementAttribute(item.querySelector('img'), 'src'),
-                url: DataCollector.getElementAttribute(item.querySelector('a'), 'href') || window.location.href
-            };
-
-            if (productData.name || productData.price) {
-                data.push(productData);
-            }
-        });
-
-        return data;
-    }
-
-    async collectLiveData() {
-        return [{
-            title: '直播间信息',
-            roomTitle: DataCollector.getElementText(document.querySelector('.live-title, [data-testid="live-title"]')),
-            host: DataCollector.getElementText(document.querySelector('.host-name, [data-testid="host-name"]')),
-            viewers: DataCollector.getElementText(document.querySelector('.viewer-count, [data-testid="viewer-count"]')),
-            url: window.location.href
-        }];
-    }
+// 页面加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        new PCTaobaoExtractor();
+    });
+} else {
+    new PCTaobaoExtractor();
 }
-
-// 淘宝数据收集模板
-class TaobaoTemplate {
-    async collect() {
-        const data = [];
-        
-        if (this.isProductPage()) {
-            const productData = await this.collectProductData();
-            if (productData) data.push(productData);
-        } else if (this.isSearchPage()) {
-            const searchData = await this.collectSearchData();
-            data.push(...searchData);
-        }
-        
-        return data;
-    }
-
-    isProductPage() {
-        return window.location.href.includes('detail.tmall.com') ||
-               window.location.href.includes('item.taobao.com');
-    }
-
-    isSearchPage() {
-        return window.location.href.includes('s.taobao.com') ||
-               window.location.href.includes('list.tmall.com');
-    }
-
-    async collectProductData() {
-        return {
-            title: '淘宝商品',
-            name: DataCollector.getElementText(document.querySelector('h1[data-spm], .tb-detail-hd h1')),
-            price: DataCollector.getPrice(DataCollector.getElementText(document.querySelector('.tm-price, .tb-rmb-num'))),
-            seller: DataCollector.getElementText(document.querySelector('.seller-name, .shop-name a')),
-            rating: DataCollector.getElementText(document.querySelector('.rate-score, .score-average')),
-            url: window.location.href
-        };
-    }
-
-    async collectSearchData() {
-        const items = document.querySelectorAll('.item, .product, [data-category="auctions"]');
-        return Array.from(items).slice(0, 20).map((item, index) => ({
-            title: '搜索结果 ' + (index + 1),
-            name: DataCollector.getElementText(item.querySelector('.title, .product-title a')),
-            price: DataCollector.getPrice(DataCollector.getElementText(item.querySelector('.price, .price-current'))),
-            seller: DataCollector.getElementText(item.querySelector('.shopname, .seller')),
-            url: DataCollector.getElementAttribute(item.querySelector('a'), 'href')
-        })).filter(item => item.name);
-    }
-}
-
-// 京东数据收集模板
-class JDTemplate {
-    async collect() {
-        const data = [];
-        
-        if (this.isProductPage()) {
-            const productData = await this.collectProductData();
-            if (productData) data.push(productData);
-        } else if (this.isSearchPage()) {
-            const searchData = await this.collectSearchData();
-            data.push(...searchData);
-        }
-        
-        return data;
-    }
-
-    isProductPage() {
-        return window.location.href.includes('item.jd.com');
-    }
-
-    isSearchPage() {
-        return window.location.href.includes('search.jd.com') ||
-               window.location.href.includes('list.jd.com');
-    }
-
-    async collectProductData() {
-        return {
-            title: '京东商品',
-            name: DataCollector.getElementText(document.querySelector('.sku-name, #name h1')),
-            price: DataCollector.getPrice(DataCollector.getElementText(document.querySelector('.price, .p-price .price'))),
-            seller: DataCollector.getElementText(document.querySelector('.seller-name, .J-hovercard')),
-            rating: DataCollector.getElementText(document.querySelector('.comment-score, .score')),
-            url: window.location.href
-        };
-    }
-
-    async collectSearchData() {
-        const items = document.querySelectorAll('.gl-item, .goods-item');
-        return Array.from(items).slice(0, 20).map((item, index) => ({
-            title: '搜索结果 ' + (index + 1),
-            name: DataCollector.getElementText(item.querySelector('.p-name em, .p-name a')),
-            price: DataCollector.getPrice(DataCollector.getElementText(item.querySelector('.p-price i'))),
-            seller: DataCollector.getElementText(item.querySelector('.p-shopnum a')),
-            url: DataCollector.getElementAttribute(item.querySelector('.p-name a'), 'href')
-        })).filter(item => item.name);
-    }
-}
-
-// 自定义模板（用户可以配置）
-class CustomTemplate {
-    async collect() {
-        // 这里可以实现用户自定义的数据收集逻辑
-        // 暂时返回页面基础信息
-        return [{
-            title: '自定义收集',
-            pageTitle: document.title,
-            url: window.location.href,
-            links: Array.from(document.querySelectorAll('a')).slice(0, 10).map(a => ({
-                text: DataCollector.getElementText(a),
-                href: a.href
-            })).filter(link => link.text),
-            images: Array.from(document.querySelectorAll('img')).slice(0, 10).map(img => img.src)
-        }];
-    }
-}
-
-// 初始化数据收集器
-const dataCollector = new DataCollector();

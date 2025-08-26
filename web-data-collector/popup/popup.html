@@ -3,110 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>网页数据收集器</title>
+    <title>淘宝商品信息</title>
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
     <div class="container">
         <!-- 头部 -->
         <div class="header">
-            <h2>数据收集器</h2>
-            <div class="status-indicator">
-                <span id="status-dot" class="status-dot inactive"></span>
-                <span id="status-text" class="status-text">未连接</span>
-            </div>
+            <h2>🖥️ 淘宝商品信息</h2>
+            <div class="status" id="status">未连接</div>
         </div>
 
-        <!-- 当前网站信息 -->
-        <div class="site-info">
-            <div class="site-header">
-                <img id="site-favicon" class="favicon" src="" alt="网站图标">
-                <div class="site-details">
-                    <div id="site-title" class="site-title">--</div>
-                    <div id="site-url" class="site-url">--</div>
-                </div>
-            </div>
+        <!-- 操作区 -->
+        <div class="actions">
+            <button id="collect-btn" class="btn-primary">获取商品信息</button>
         </div>
 
-        <!-- 数据模板选择 -->
-        <div class="template-section">
-            <h3>选择数据模板</h3>
-            <div class="template-options">
-                <select id="template-select">
-                    <option value="">选择网站模板...</option>
-                    <option value="douyin">抖音商城</option>
-                    <option value="taobao">淘宝商品</option>
-                    <option value="jd">京东商品</option>
-                    <option value="custom">自定义模板</option>
-                </select>
-                <button id="start-collect" class="btn btn-primary" disabled>开始收集</button>
-            </div>
-        </div>
-
-        <!-- 收集到的数据展示 -->
-        <div class="data-section">
-            <div class="data-header">
-                <h3>收集到的数据</h3>
-                <div class="data-actions">
-                    <button id="refresh-data" class="btn btn-small">刷新</button>
-                    <button id="export-data" class="btn btn-small">导出</button>
-                </div>
-            </div>
-            
-            <div id="data-container" class="data-container">
-                <div class="empty-state">
-                    <div class="empty-icon">📊</div>
-                    <p>暂无数据</p>
-                    <p class="empty-hint">选择模板并开始收集</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 历史记录 -->
-        <div class="history-section">
-            <div class="section-header">
-                <h3>历史记录</h3>
-                <button id="clear-history" class="btn btn-link">清空</button>
-            </div>
-            <div id="history-list" class="history-list">
-                <!-- 历史记录将在这里动态添加 -->
-            </div>
-        </div>
-
-        <!-- 设置区域 -->
-        <div class="settings-section">
-            <button id="settings-btn" class="btn btn-link">⚙️ 设置</button>
-        </div>
-    </div>
-
-    <!-- 设置面板 -->
-    <div id="settings-panel" class="settings-panel hidden">
-        <div class="settings-header">
-            <h3>设置</h3>
-            <button id="close-settings" class="btn btn-link">✕</button>
-        </div>
-        <div class="settings-content">
-            <div class="setting-item">
-                <label>
-                    <input type="checkbox" id="auto-collect"> 
-                    自动收集数据
-                </label>
-            </div>
-            <div class="setting-item">
-                <label>
-                    <input type="checkbox" id="show-notifications"> 
-                    显示通知
-                </label>
-            </div>
-            <div class="setting-item">
-                <label>
-                    数据保存天数:
-                    <select id="storage-days">
-                        <option value="7">7天</option>
-                        <option value="30">30天</option>
-                        <option value="90">90天</option>
-                    </select>
-                </label>
+        <!-- 商品信息展示 -->
+        <div class="product-info" id="product-info">
+            <div class="empty-state">
+                <p>📦</p>
+                <p>点击按钮获取商品信息</p>
+                <p class="hint">仅支持PC版淘宝商品详情页</p>
             </div>
         </div>
     </div>
