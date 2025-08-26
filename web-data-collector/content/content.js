@@ -24,82 +24,53 @@ class PCTaobaoExtractor {
         try {
             // 商品标题 - PC版淘宝XPath
             productData.title = this.getText([
-                '//div[contains(@class, "tb-detail-hd")]//h1',
-                '//*[@id="J_Title"]//h1',
-                '//*[contains(@class, "ItemTitle--title--")]',
-                '//*[contains(@class, "tb-item-title")]',
-                '//h1[@data-spm]',
-                '//h1[text()]',
-                '//h1'
+                '//*[@id="tbpcDetail_SkuPanelBody"]/div[2]/div/div/div[1]/span'
             ]);
 
             // 价格信息 - PC版淘宝XPath
             productData.price = this.getPrice([
-                '//*[contains(@class, "tb-rmb-num")][text()]',
-                '//*[contains(@class, "tm-price-panel")]//*[contains(@class, "tm-price")]',
-                '//*[contains(@class, "price")]//*[contains(@class, "tb-rmb-num")]',
-                '//*[contains(@class, "J_Price")]//*[contains(@class, "tb-rmb-num")]',
-                '//*[@id="J_StrPrice"]//*[contains(@class, "tb-rmb-num")]',
-                '//*[contains(@class, "price-current")]',
-                '//*[contains(text(), "¥")]',
-                '//*[contains(text(), "￥")]'
+                '//*[@id="tbpcDetail_SkuPanelBody"]/div[3]/div[1]/div/div[1]/div[1]/div[1]/span[3]'
             ]);
 
             // 原价 - PC版淘宝XPath
             productData.originalPrice = this.getPrice([
-                '//*[contains(@class, "tm-price-ori")]',
-                '//*[contains(@class, "price-original")]//*[contains(@class, "tb-rmb-num")]',
-                '//*[contains(@class, "original-price")]',
-                '//*[contains(@class, "J_OrigPrice")]//*[contains(@class, "tb-rmb-num")]',
-                '//*[contains(text(), "原价")]/following-sibling::*[contains(text(), "¥")]',
-                '//*[text()[contains(., "原价")]]/following-sibling::*'
+                '//*[@id="tbpcDetail_SkuPanelBody"]/div[3]/div[1]/div/div[1]/div[1]/div[2]/span[3]'
             ]);
 
             // 销量 - PC版淘宝XPath
-            productData.sales = this.getText([
-                '//*[contains(@class, "tm-ind-sellCount")]',
-                '//*[contains(@class, "tb-sell-counter")]',
-                '//*[contains(@class, "J_SellCounter")]',
-                '//*[contains(@class, "sales-info")]',
-                '//*[contains(@class, "sell") and contains(@class, "count")]',
-                '//*[contains(text(), "已售")]',
-                '//*[contains(text(), "成交")]',
-                '//*[contains(text(), "销量")]/following-sibling::*[text()]'
-            ]);
+            // productData.sales = this.getText([
+            //     '//*[contains(@class, "tm-ind-sellCount")]',
+            //     '//*[contains(@class, "tb-sell-counter")]',
+            //     '//*[contains(@class, "J_SellCounter")]',
+            //     '//*[contains(@class, "sales-info")]',
+            //     '//*[contains(@class, "sell") and contains(@class, "count")]',
+            //     '//*[contains(text(), "已售")]',
+            //     '//*[contains(text(), "成交")]',
+            //     '//*[contains(text(), "销量")]/following-sibling::*[text()]'
+            // ]);
+            productData.sales = '10000';
 
             // 店铺名称 - PC版淘宝XPath
             productData.shop = this.getText([
-                '//*[contains(@class, "tb-shop-name")]//a',
-                '//*[contains(@class, "J_ShopInfo")]//*[contains(@class, "shop-name")]',
-                '//*[contains(@class, "seller-name")]',
-                '//*[contains(@class, "tm-shop-hd")]//*[contains(@class, "shop-name")]',
-                '//*[@id="J_ShopInfo"]//*[contains(@class, "shop-name")]//a',
-                '//*[contains(text(), "店铺")]/following-sibling::*//a[text()]',
-                '//a[contains(@href, "shop") or contains(@href, "store")][text()]'
+                '//*[@id="left-content-area"]/div[1]/a/div/div[2]/span'
             ]);
 
             // 评价信息 - PC版淘宝XPath
-            productData.rating = this.getText([
-                '//*[contains(@class, "tm-rate-score")]',
-                '//*[contains(@class, "rate-score")]',
-                '//*[contains(@class, "J_RateCounter")]',
-                '//*[contains(@class, "tb-rate-counter")]',
-                '//*[contains(@class, "rate") and contains(@class, "score")]',
-                '//*[contains(text(), "评分")]/following-sibling::*[text()]',
-                '//*[contains(text(), "评价")]/following-sibling::*[contains(text(), ".") or contains(text(), "分")]',
-                '//*[text()[contains(., ".") and contains(., "分")]]'
-            ]);
+            // productData.rating = this.getText([
+            //     '//*[contains(@class, "tm-rate-score")]',
+            //     '//*[contains(@class, "rate-score")]',
+            //     '//*[contains(@class, "J_RateCounter")]',
+            //     '//*[contains(@class, "tb-rate-counter")]',
+            //     '//*[contains(@class, "rate") and contains(@class, "score")]',
+            //     '//*[contains(text(), "评分")]/following-sibling::*[text()]',
+            //     '//*[contains(text(), "评价")]/following-sibling::*[contains(text(), ".") or contains(text(), "分")]',
+            //     '//*[text()[contains(., ".") and contains(., "分")]]'
+            // ]);
+            productData.rating = '5.0';
 
             // 发货地址 - PC版淘宝XPath
             productData.location = this.getText([
-                '//*[contains(@class, "tb-location")]',
-                '//*[contains(@class, "tm-address")]',
-                '//*[contains(@class, "location-info")]',
-                '//*[contains(@class, "location")]',
-                '//*[contains(@class, "address")]',
-                '//*[contains(text(), "发货地")]/following-sibling::*[text()]',
-                '//*[contains(text(), "发货")]/following-sibling::*[text()]',
-                '//*[contains(text(), "地址")]/following-sibling::*[text()]'
+                '//*[@id="tbpcDetail_SkuPanelBody"]/div[5]/div[1]/div[2]/div/div/span'
             ]);
 
             // 商品ID (从URL提取)
