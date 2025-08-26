@@ -1,0 +1,46 @@
+{
+  "name": "web-data-collector",
+  "version": "1.0.0",
+  "description": "一个用于收集网页数据信息并展示在弹出面板中的浏览器插件",
+  "main": "manifest.json",
+  "scripts": {
+    "build": "echo '构建完成，可直接加载到Chrome扩展程序'",
+    "dev": "echo '开发模式：请在Chrome扩展程序页面加载web-data-collector文件夹'",
+    "generate-icons": "node scripts/generate-icons.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "data-collection",
+    "web-scraping",
+    "douyin",
+    "taobao",
+    "jd",
+    "browser-extension"
+  ],
+  "author": "Data Collector Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/web-data-collector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/web-data-collector/issues"
+  },
+  "homepage": "https://github.com/yourusername/web-data-collector#readme",
+  "chrome_extension": {
+    "manifest_version": 3,
+    "permissions": [
+      "activeTab",
+      "storage",
+      "scripting"
+    ],
+    "supported_sites": [
+      "douyin.com",
+      "taobao.com",
+      "tmall.com",
+      "jd.com"
+    ]
+  }
+}
