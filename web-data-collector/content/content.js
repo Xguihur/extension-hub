@@ -145,6 +145,13 @@ class PCTaobaoExtractor {
                 null
             );
             const elements = [];
+            /**
+             *  iterateNext() 是一个迭代器方法，它的工作原理如下：
+                内部指针机制：result 对象内部维护一个指针，记录当前迭代位置
+                每次调用前进：每次调用 iterateNext() 都会：
+                返回当前指针位置的元素
+                将内部指针移动到下一个位置
+             */
             let element = result.iterateNext();
             while (element) {
                 elements.push(element);
