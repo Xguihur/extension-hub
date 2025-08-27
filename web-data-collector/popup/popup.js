@@ -61,6 +61,10 @@ class TaobaoCollector {
 
         try {
             // 向content script发送消息
+            /**
+             * 第一个参数：this.currentTab.id - 目标标签页的 ID
+             * 第二个参数：消息对象 { action: 'getProductInfo' } - 发送给 content script 的数据
+             */
             const response = await chrome.tabs.sendMessage(this.currentTab.id, {
                 action: 'getProductInfo'
             });

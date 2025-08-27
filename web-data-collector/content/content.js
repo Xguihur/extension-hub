@@ -7,6 +7,31 @@ class PCTaobaoExtractor {
 
     init() {
         // 监听popup的消息
+        /**
+         * 1. request 参数
+         * 含义：从其他地方发送过来的消息对象
+         * 在你的代码中：就是 { action: 'getProductInfo' }
+         * 类型：任何可序列化的JavaScript对象
+         * 2. sender 参数
+         * 含义：发送者的信息对象，包含发送消息的来源详情
+         * 常用属性：
+         *   {
+         *      tab: { id: 123, url: "https://..." },    // 发送消息的标签页信息
+         *      frameId: 0,                              // frame ID
+         *      id: "extension-id",                      // 扩展程序ID
+         *      url: "chrome-extension://..."            // 发送者URL
+         *   }
+         * 3. sendResponse 参数
+         * 含义：用于发送响应的回调函数
+         * 用法：sendResponse(responseData)
+         * 重要：这是让 sendMessage 能够获取返回值的关键
+         *
+         * return true 的重要性： 这行代码告诉Chrome “不要关闭消息通道，直到你调用 sendResponse 为止”
+         * 如果没有 return true：
+         * 消息通道会立即关闭
+         * sendResponse 调用无效
+         * sendMessage 会收到 undefined
+         */
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (request.action === 'getProductInfo') {
                 const productInfo = this.extractProductInfo();
@@ -20,7 +45,7 @@ class PCTaobaoExtractor {
 
     extractProductInfo() {
         const productData = {};
-        
+
         try {
             // 商品标题 - PC版淘宝XPath
             productData.title = this.getText([
@@ -147,10 +172,10 @@ class PCTaobaoExtractor {
             const elements = [];
             /**
              *  iterateNext() 是一个迭代器方法，它的工作原理如下：
-                内部指针机制：result 对象内部维护一个指针，记录当前迭代位置
-                每次调用前进：每次调用 iterateNext() 都会：
-                返回当前指针位置的元素
-                将内部指针移动到下一个位置
+             *  内部指针机制：result 对象内部维护一个指针，记录当前迭代位置
+             *  每次调用前进：每次调用 iterateNext() 都会：
+             *  返回当前指针位置的元素
+             *  将内部指针移动到下一个位置
              */
             let element = result.iterateNext();
             while (element) {
