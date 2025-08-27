@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "淘宝商品信息收集器",
+  "version": "1.0.0",
+  "description": "收集淘宝网页商品详情页信息",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://item.taobao.com/*",
+    "*://detail.tmall.com/*",
+    "*://*.taobao.com/*",
+    "*://*.tmall.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "淘宝商品信息"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://item.taobao.com/*",
+        "*://detail.tmall.com/*",
+        "*://*.taobao.com/item.htm*",
+        "*://*.tmall.com/item.htm*"
+      ],
+      "js": ["content/content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "icons/logo.png",
+    "32": "icons/logo.png",
+    "48": "icons/logo.png",
+    "128": "icons/logo.png"
+  }
+}
