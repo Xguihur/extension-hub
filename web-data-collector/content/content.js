@@ -167,7 +167,7 @@ class PCTaobaoExtractor {
     extractItemId() {
         try {
             const url = window.location.href;
-            
+
             // 从URL中提取商品ID的多种模式
             const patterns = [
                 /id=(\d+)/,           // ?id=123456
@@ -186,44 +186,6 @@ class PCTaobaoExtractor {
             console.error('提取商品ID失败:', error);
         }
         return '';
-    }
-
-    // 工具方法：等待元素出现 (支持XPath)
-    waitForElement(xpathOrSelector, timeout = 5000) {
-        return new Promise((resolve, reject) => {
-            // 判断是XPath还是CSS选择器
-            const isXPath = xpathOrSelector.startsWith('/') || xpathOrSelector.startsWith('./');
-            
-            let element = isXPath 
-                ? this.getElementByXPath(xpathOrSelector)
-                : document.querySelector(xpathOrSelector);
-            
-            if (element) {
-                resolve(element);
-                return;
-            }
-
-            const observer = new MutationObserver(() => {
-                let element = isXPath 
-                    ? this.getElementByXPath(xpathOrSelector)
-                    : document.querySelector(xpathOrSelector);
-                
-                if (element) {
-                    observer.disconnect();
-                    resolve(element);
-                }
-            });
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-
-            setTimeout(() => {
-                observer.disconnect();
-                reject(new Error(`元素未找到: ${xpathOrSelector}`));
-            }, timeout);
-        });
     }
 }
 
